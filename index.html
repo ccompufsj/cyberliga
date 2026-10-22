@@ -147,6 +147,7 @@
   .campeao { margin-top: 14px; font-family: var(--display); font-size: 1.1rem; text-align: center; }
   .campeao span.team { color: var(--cyan); }
 
+  .aviso { border: 1px solid var(--gA); color: var(--gA); border-radius: 6px; padding: 10px 14px; margin: 0 0 32px; }
   .nota { margin-top: 28px; font-size: 0.82rem; color: var(--muted); max-width: 70ch; }
 
   /* ---------- regulamento ---------- */
@@ -179,6 +180,8 @@
       <a href="#regulamento">Regulamento</a>
     </nav>
   </header>
+
+  <p id="aviso" class="aviso" hidden></p>
 
   <section id="grupos-sec">
     <h2>Fase de grupos</h2>
@@ -260,14 +263,19 @@
 
 <script>
 /* =====================================================================
-   DADOS: edite só esta parte.
-   - nome: como a equipe aparece na página
-   - membros: lista mostrada ao passar o mouse
-   - sorteio: só se o desempate chegar ao sorteio (menor número fica na frente)
-   - sets: parciais de cada set, [pontos do mandante, pontos do visitante].
-     Vazio = jogo ainda não aconteceu. Ex.: sets: [[15, 12], [13, 15], [15, 9]]
-     W.O. nos grupos: [[15, 0], [15, 0]]; nas finais: [[21, 0], [21, 0]]
+   PLANILHA: cole aqui o link da planilha do Google.
+   Ela precisa estar compartilhada como "Qualquer pessoa com o link: Leitor"
+   e ter duas abas:
+   - Jogos:   Jogo | Data | Hora | Quadra | S1 M | S1 V | S2 M | S2 V | S3 M | S3 V
+              (S1 M = pontos do mandante no set 1, S1 V = do visitante, etc.)
+              W.O. nos grupos: 15 x 0 nos dois sets; nas finais: 21 x 0.
+   - Membros: Equipe | Membro   (uma linha por pessoa, nome da equipe igual ao do site)
+   Colunas extras (ex.: Mandante, Visitante) são ignoradas.
    ===================================================================== */
+const PLANILHA = "https://docs.google.com/spreadsheets/d/1ZCiELRTsWW7wpUKhyXimWxSlvJC2d0VtQK90R6FYPww/edit?usp=sharing";
+
+/* Fixos do campeonato. "sorteio" só se o desempate chegar ao sorteio
+   (menor número fica na frente). */
 const TIMES = {
   A: { nome: "Turma da Duda",      membros: [] },
   B: { nome: "Compilas VC",        membros: [] },
@@ -313,6 +321,63 @@ const MATA = {
 /* ===================================================================== */
 
 const GRUPOS = { A: ["A", "B", "C", "D"], B: ["E", "F", "G", "H"], C: ["I", "J", "K", "L"] };
+
+/* ---------- leitura da planilha ---------- */
+function parseCSV(txt) {
+  const rows = [[]];
+  let campo = "", aspas = false;
+  for (let i = 0; i < txt.length; i++) {
+    const c = txt[i];
+    if (aspas) {
+      if (c === '"' && txt[i + 1] === '"') { campo += '"'; i++; }
+      else if (c === '"') aspas = false;
+      else campo += c;
+    } else if (c === '"') aspas = true;
+    else if (c === ",") { rows.at(-1).push(campo); campo = ""; }
+    else if (c === "\n") { rows.at(-1).push(campo); campo = ""; rows.push([]); }
+    else if (c !== "\r") campo += c;
+  }
+  rows.at(-1).push(campo);
+  const [cab, ...dados] = rows;
+  const h = cab.map(s => s.trim());
+  return dados
+    .filter(r => r.some(s => s.trim()))
+    .map(r => Object.fromEntries(h.map((k, i) => [k, (r[i] ?? "").trim()])));
+}
+
+async function aba(nome) {
+  const id = (PLANILHA.match(/\/d\/([\w-]+)/) || [, PLANILHA])[1];
+  const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(nome)}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`aba ${nome}: HTTP ${r.status}`);
+  return parseCSV(await r.text());
+}
+
+const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+async function carregar() {
+  const [jogos, membros] = await Promise.all([aba("Jogos"), aba("Membros")]);
+
+  const porNum = Object.fromEntries([...JOGOS.map(j => [j.n, j]), ...Object.entries(MATA).map(([n, j]) => [n, j])]);
+  for (const r of jogos) {
+    const j = porNum[parseInt(r["Jogo"], 10)];
+    if (!j) continue;
+    j.data = r["Data"] ?? ""; j.hora = r["Hora"] ?? ""; j.quadra = r["Quadra"] ?? "";
+    j.sets = [];
+    for (let s = 1; s <= 3; s++) {
+      const m = r[`S${s} M`], v = r[`S${s} V`];
+      if (m && v) j.sets.push([Number(m), Number(v)]);
+    }
+  }
+
+  const ids = Object.fromEntries(Object.entries(TIMES).map(([id, t]) => [norm(t.nome), id]));
+  Object.values(TIMES).forEach(t => (t.membros = []));
+  for (const r of membros) {
+    const id = ids[norm(r["Equipe"] || "")];
+    if (id && r["Membro"]) TIMES[id].membros.push(r["Membro"]);
+    else if (r["Equipe"]) console.warn("Equipe não encontrada na aba Membros:", r["Equipe"]);
+  }
+}
 
 // soma sets e pontos de um jogo: a/b = sets do mandante/visitante, pa/pb = pontos
 function apura(sets) {
@@ -492,6 +557,14 @@ document.addEventListener("click", e => { const el = e.target.closest(".team"); 
 addEventListener("scroll", esconder, { passive: true });
 
 render();
+carregar()
+  .then(render)
+  .catch(e => {
+    console.error(e);
+    const p = document.getElementById("aviso");
+    p.textContent = "Não foi possível ler a planilha de resultados. Confira o link e se ela está compartilhada para qualquer pessoa com o link.";
+    p.hidden = false;
+  });
 </script>
 </body>
 </html>
