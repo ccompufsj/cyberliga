@@ -467,7 +467,7 @@ function grupoHTML(g) {
     <tr class="${i === 0 ? "lider" : ""}">
       <td>${i + 1}</td><td>${time(t.id)}</td>
       <td>${t.j}</td><td>${t.v}</td><td>${t.d}</td>
-      <td>${t.sp}</td><td>${t.sc}</td><td>${t.sp - t.sc}</td>
+      <td>${t.pp}</td><td>${t.pc}</td><td>${t.pp - t.pc}</td>
       <td class="pts">${t.pts}</td>
     </tr>`).join("");
   const jogos = JOGOS.filter(j => j.chave === g).map(jogoHTML).join("");
@@ -475,7 +475,7 @@ function grupoHTML(g) {
     <h3>Grupo ${g}</h3>
     <table>
       <thead><tr><th>#</th><th>Equipe</th><th title="Jogos">J</th><th title="Vitórias">V</th><th title="Derrotas">D</th>
-      <th title="Sets pró">SP</th><th title="Sets contra">SC</th><th title="Saldo de sets">S</th><th title="Pontos">Pts</th></tr></thead>
+      <th title="Pontos pró (soma dos pontos feitos)">SP</th><th title="Pontos contra (soma dos pontos sofridos)">SC</th><th title="Saldo de pontos">S</th><th title="Pontos de classificação (1 por set vencido)">Pts</th></tr></thead>
       <tbody>${linhas}</tbody>
     </table>
     <ul class="jogos">${jogos}</ul>
