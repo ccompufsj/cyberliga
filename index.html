@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyber Liga de Vôlei 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1c33;
+    --panel: #152642;
+    --line: #2a3d60;
+    --text: #e6edf7;
+    --muted: #8fa0bd;
+    --cyan: #4cc9f0;
+    --gA: #f6b99a;   /* cores das chaves, as mesmas da tabela oficial */
+    --gB: #a8d08d;
+    --gC: #9cc9ea;
+    --display: "Chakra Petch", "Trebuchet MS", sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 var(--body);
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 48px 20px 64px; }
+
+  header { margin-bottom: 48px; }
+  h1 {
+    font: 700 clamp(2.2rem, 6vw, 3.6rem)/1 var(--display);
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  header p { margin: 0; color: var(--muted); }
+  nav { margin-top: 16px; display: flex; gap: 20px; font-size: 0.9rem; }
+  nav a { color: var(--cyan); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  h2 {
+    font: 600 1.4rem/1.2 var(--display);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  section + section { margin-top: 56px; }
+
+  /* ---------- grupos ---------- */
+  .grupos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+  .grupo {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--cor);
+    border-radius: 6px;
+    padding: 18px;
+  }
+  .grupo h3 { font: 600 1.15rem var(--display); margin: 0 0 12px; color: var(--cor); }
+
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 4px; text-align: center; }
+  th { font-weight: 500; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid var(--line); }
+  th:nth-child(2), td:nth-child(2) { text-align: left; }
+  td.pts { font-weight: 600; font-family: var(--display); }
+  tr.lider td:first-child { color: var(--cor); font-weight: 600; }
+  tr.lider td:first-child::before { content: "▸ "; }
+
+  .jogos { list-style: none; margin: 16px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--line); }
+  .jogo {
+    display: grid;
+    grid-template-columns: 2.6em 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.88rem;
+  }
+  .jogo .num { color: var(--muted); font-size: 0.78rem; }
+  .jogo .dir { text-align: right; }
+  .jogo .placar { font-family: var(--display); color: var(--muted); min-width: 3.2em; text-align: center; }
+  .jogo .info { grid-column: 2 / -1; font-size: 0.75rem; color: var(--muted); margin-top: -4px; text-align: center; }
+  .win { font-weight: 600; color: var(--text); }
+  .jogo .lado:not(.win) { color: #c3cee0; }
+
+  /* ---------- nomes com tooltip ---------- */
+  .team {
+    cursor: help;
+    border-bottom: 1px dotted var(--muted);
+  }
+  .team:hover, .team:focus { color: var(--cyan); border-color: var(--cyan); outline: none; }
+  .tbd { color: var(--muted); font-style: italic; }
+
+  #tip {
+    position: fixed;
+    z-index: 10;
+    min-width: 180px;
+    max-width: 260px;
+    background: #0a1426;
+    border: 1px solid var(--cyan);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  #tip strong { display: block; font-family: var(--display); margin-bottom: 6px; }
+  #tip ul { margin: 0; padding-left: 18px; }
+  #tip .vazio { color: var(--muted); margin: 0; }
+
+  /* ---------- mata-mata ---------- */
+  .chave {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    max-width: 760px;
+  }
+  .cel { padding: 10px 0; }
+  .s1 { grid-area: 1 / 1; }
+  .s2 { grid-area: 2 / 1; }
+  .c1 { grid-area: 1 / 2; }
+  .c2 { grid-area: 2 / 2; }
+  .fin { grid-area: 1 / 3 / 3 / 4; align-self: center; }
+  .ter { grid-area: 3 / 3; margin-top: 16px; }
+
+  .con { position: relative; }
+  .con::before { content: ""; position: absolute; left: 0; right: 50%; border: 1px solid var(--line); border-left: 0; }
+  .c1::before { top: 50%; bottom: 0; border-bottom: 0; }
+  .c2::before { top: 0; bottom: 50%; border-top: 0; }
+  .c1::after { content: ""; position: absolute; left: 50%; right: 0; bottom: 0; border-top: 1px solid var(--line); }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .card .topo { display: flex; justify-content: space-between; padding: 6px 12px; font-size: 0.78rem; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .card .parciais { padding: 5px 12px; font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--line); text-align: right; }
+  .linha { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; gap: 12px; }
+  .linha + .linha { border-top: 1px solid var(--line); }
+  .linha .sets { font-family: var(--display); color: var(--muted); }
+  .linha.win .sets { color: var(--cyan); }
+
+  .fin .card { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 0 28px rgba(76, 201, 240, 0.18); }
+  .fin .card .topo { color: var(--cyan); }
+  .campeao { margin-top: 14px; font-family: var(--display); font-size: 1.1rem; text-align: center; }
+  .campeao span.team { color: var(--cyan); }
+
+  .nota { margin-top: 28px; font-size: 0.82rem; color: var(--muted); max-width: 70ch; }
+
+  /* ---------- regulamento ---------- */
+  .regras {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 28px 40px;
+    max-width: 960px;
+  }
+  .regras article h3 { font: 600 1.02rem/1.3 var(--display); margin: 0 0 6px; }
+  .regras article h3 span { color: var(--cyan); margin-right: 6px; }
+  .regras p, .regras li { margin: 0 0 6px; color: #c9d4e6; font-size: 0.92rem; max-width: 62ch; }
+  .regras ul, .regras ol { margin: 0; padding-left: 20px; }
+
+  @media (max-width: 640px) {
+    .chave { grid-template-columns: 1fr; }
+    .con { display: none; }
+    .s1, .s2, .fin, .ter { grid-area: auto; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Cyber Liga de Vôlei</h1>
+    <p>Primeira edição, vôlei de areia em quartetos. Ciência da Computação UFSJ, 2026.</p>
+    <nav>
+      <a href="#grupos-sec">Fase de grupos</a>
+      <a href="#mata-sec">Mata-mata</a>
+      <a href="#regulamento">Regulamento</a>
+    </nav>
+  </header>
+
+  <section id="grupos-sec">
+    <h2>Fase de grupos</h2>
+    <div class="grupos" id="grupos"></div>
+    <p class="nota">Cada set vencido vale 1 ponto. Passam o 1º de cada chave e o melhor 2º colocado geral.
+      Passe o mouse (ou toque) sobre uma equipe para ver os membros.</p>
+  </section>
+
+  <section id="mata-sec">
+    <h2>Mata-mata</h2>
+    <div class="chave" id="chave"></div>
+  </section>
+
+  <section id="regulamento">
+    <h2>Regulamento</h2>
+    <div class="regras">
+      <article>
+        <h3><span>Art. 1º</span>Formatação das equipes</h3>
+        <p>O campeonato é disputado na modalidade quarteto.</p>
+        <p>É obrigatória a presença de pelo menos uma mulher em quadra por equipe durante toda a partida.</p>
+      </article>
+      <article>
+        <h3><span>Art. 2º</span>Formato de disputa</h3>
+        <p>3 chaves de 4 equipes, definidas por sorteio.</p>
+        <ul>
+          <li>Na fase de grupos, todas as equipes jogam entre si dentro da chave.</li>
+          <li>Classificam-se para a fase final os primeiros colocados de cada chave e o melhor segundo colocado geral.</li>
+        </ul>
+      </article>
+      <article>
+        <h3><span>Art. 3º</span>Pontuação e duração das partidas</h3>
+        <p>Partidas em melhor de 3 sets.</p>
+        <ul>
+          <li>Fase de grupos: sets até 15 pontos.</li>
+          <li>Fases finais (semifinal, final e 3º lugar): sets até 21 pontos.</li>
+          <li>Para vencer um set é preciso diferença mínima de 2 pontos. Empatou em 14 × 14 nos grupos, o set vai a 16; em 20 × 20 nas finais, vai a 22, e assim por diante.</li>
+        </ul>
+      </article>
+      <article>
+        <h3><span>Art. 4º</span>Faltas e invasões</h3>
+        <ul>
+          <li>Não é permitido encostar na rede durante as jogadas.</li>
+          <li>Não é permitido pisar na linha no momento do saque.</li>
+          <li>Invasões nítidas, como passar os dois pés totalmente para a quadra adversária ou interferir na jogada do adversário, são faltas.</li>
+        </ul>
+      </article>
+      <article>
+        <h3><span>Art. 5º</span>Ausência e W.O.</h3>
+        <p>W.O. é decretado se uma equipe não se apresentar após 15 minutos de atraso em relação ao horário oficial.</p>
+        <p>A equipe presente vence por 2 sets a 0, com parciais de 15 × 0 na fase de grupos e 21 × 0 nas fases finais.</p>
+      </article>
+      <article>
+        <h3><span>Art. 6º</span>Pontuação de classificação</h3>
+        <p>Na fase de chaves, cada equipe soma 1 ponto por set vencido.</p>
+      </article>
+      <article>
+        <h3><span>Art. 7º</span>Critérios de desempate</h3>
+        <p>Empate em pontos na fase de grupos, ao fim de todas as rodadas:</p>
+        <ol>
+          <li>Maior número de vitórias</li>
+          <li>Confronto direto</li>
+          <li>Sets average</li>
+          <li>Pontos average</li>
+          <li>Sorteio</li>
+        </ol>
+      </article>
+      <article>
+        <h3><span>Art. 8º</span>Tempos e intervalos</h3>
+        <p>Cada equipe tem direito a 1 pedido de tempo de 30 segundos por set.</p>
+      </article>
+      <article>
+        <h3><span>Art. 9º</span>Troca de quadra e saque</h3>
+        <p>As equipes trocam de lado a cada set concluído. Se houver terceiro set, novo sorteio define o lado da quadra e o primeiro saque.</p>
+      </article>
+    </div>
+  </section>
+</main>
+<div id="tip" hidden></div>
+
+<script>
+/* =====================================================================
+   DADOS: edite só esta parte.
+   - nome: como a equipe aparece na página
+   - membros: lista mostrada ao passar o mouse
+   - sorteio: só se o desempate chegar ao sorteio (menor número fica na frente)
+   - sets: parciais de cada set, [pontos do mandante, pontos do visitante].
+     Vazio = jogo ainda não aconteceu. Ex.: sets: [[15, 12], [13, 15], [15, 9]]
+     W.O. nos grupos: [[15, 0], [15, 0]]; nas finais: [[21, 0], [21, 0]]
+   ===================================================================== */
+const TIMES = {
+  A: { nome: "Turma da Duda",      membros: [] },
+  B: { nome: "Compilas VC",        membros: [] },
+  C: { nome: "Python",             membros: [] },
+  D: { nome: "Mãos de Alface 2",   membros: [] },
+  E: { nome: "404",                membros: [] },
+  F: { nome: "Saque Murcho",       membros: [] },
+  G: { nome: "Compilação Precoce", membros: [] },
+  H: { nome: "Firefox",            membros: [] },
+  I: { nome: "Cuecas e Calcinhas", membros: [] },
+  J: { nome: "Saca Fofo",          membros: [] },
+  K: { nome: "Mãos de Alface",     membros: [] },
+  L: { nome: "Bogos Binted",       membros: [] },
+};
+
+const JOGOS = [
+  { n: 1,  chave: "B", m: "E", v: "F", sets: [], data: "", hora: "", quadra: "" },
+  { n: 2,  chave: "C", m: "I", v: "J", sets: [], data: "", hora: "", quadra: "" },
+  { n: 3,  chave: "A", m: "B", v: "C", sets: [], data: "", hora: "", quadra: "" },
+  { n: 4,  chave: "C", m: "K", v: "J", sets: [], data: "", hora: "", quadra: "" },
+  { n: 5,  chave: "B", m: "H", v: "F", sets: [], data: "", hora: "", quadra: "" },
+  { n: 6,  chave: "A", m: "D", v: "A", sets: [], data: "", hora: "", quadra: "" },
+  { n: 7,  chave: "C", m: "I", v: "L", sets: [], data: "", hora: "", quadra: "" },
+  { n: 8,  chave: "B", m: "G", v: "E", sets: [], data: "", hora: "", quadra: "" },
+  { n: 9,  chave: "C", m: "L", v: "J", sets: [], data: "", hora: "", quadra: "" },
+  { n: 10, chave: "A", m: "C", v: "D", sets: [], data: "", hora: "", quadra: "" },
+  { n: 11, chave: "B", m: "G", v: "H", sets: [], data: "", hora: "", quadra: "" },
+  { n: 12, chave: "A", m: "A", v: "B", sets: [], data: "", hora: "", quadra: "" },
+  { n: 13, chave: "C", m: "I", v: "K", sets: [], data: "", hora: "", quadra: "" },
+  { n: 14, chave: "B", m: "G", v: "F", sets: [], data: "", hora: "", quadra: "" },
+  { n: 15, chave: "A", m: "A", v: "C", sets: [], data: "", hora: "", quadra: "" },
+  { n: 16, chave: "B", m: "H", v: "E", sets: [], data: "", hora: "", quadra: "" },
+  { n: 17, chave: "C", m: "K", v: "L", sets: [], data: "", hora: "", quadra: "" },
+  { n: 18, chave: "A", m: "D", v: "B", sets: [], data: "", hora: "", quadra: "" },
+];
+
+const MATA = {
+  19: { sets: [], data: "", hora: "", quadra: "" },  // semifinal: 1º A x 1º B
+  20: { sets: [], data: "", hora: "", quadra: "" },  // semifinal: 1º C x melhor 2º
+  21: { sets: [], data: "", hora: "", quadra: "" },  // 3º lugar
+  22: { sets: [], data: "", hora: "", quadra: "" },  // final
+};
+/* ===================================================================== */
+
+const GRUPOS = { A: ["A", "B", "C", "D"], B: ["E", "F", "G", "H"], C: ["I", "J", "K", "L"] };
+
+// soma sets e pontos de um jogo: a/b = sets do mandante/visitante, pa/pb = pontos
+function apura(sets) {
+  const r = { a: 0, b: 0, pa: 0, pb: 0 };
+  for (const [x, y] of sets) { x > y ? r.a++ : r.b++; r.pa += x; r.pb += y; }
+  return r;
+}
+const jogado = j => j.sets.length > 0;
+
+// Art. 6º e 7º: pontos (sets vencidos), vitórias, confronto direto, sets average, pontos average, sorteio
+const avg = (p, c) => (c ? p / c : p ? Infinity : 0);
+const base = (x, y) => y.pts - x.pts || y.v - x.v;
+const medias = (x, y) =>
+  avg(y.sp, y.sc) - avg(x.sp, x.sc) ||
+  avg(y.pp, y.pc) - avg(x.pp, x.pc) ||
+  (TIMES[x.id].sorteio ?? 0) - (TIMES[y.id].sorteio ?? 0);
+
+function confrontoDireto(g, p, q) {
+  const j = JOGOS.find(j => j.chave === g && jogado(j) && [j.m, j.v].includes(p) && [j.m, j.v].includes(q));
+  if (!j) return null;
+  const r = apura(j.sets);
+  return r.a > r.b ? j.m : j.v;
+}
+
+function classificacao(g) {
+  const t = {};
+  GRUPOS[g].forEach(id => (t[id] = { id, j: 0, v: 0, d: 0, sp: 0, sc: 0, pp: 0, pc: 0, pts: 0 }));
+  JOGOS.filter(j => j.chave === g && jogado(j)).forEach(({ m, v, sets }) => {
+    const r = apura(sets), M = t[m], V = t[v];
+    M.j++; V.j++;
+    M.sp += r.a; M.sc += r.b; M.pp += r.pa; M.pc += r.pb;
+    V.sp += r.b; V.sc += r.a; V.pp += r.pb; V.pc += r.pa;
+    r.a > r.b ? (M.v++, V.d++) : (V.v++, M.d++);
+  });
+  const lista = Object.values(t);
+  lista.forEach(x => (x.pts = x.sp));
+  lista.sort((x, y) => base(x, y) || medias(x, y));
+
+  // confronto direto só decide quando exatamente duas equipes seguem empatadas
+  for (let i = 0; i < lista.length; ) {
+    let k = i + 1;
+    while (k < lista.length && !base(lista[i], lista[k])) k++;
+    if (k - i === 2 && confrontoDireto(g, lista[i].id, lista[i + 1].id) === lista[i + 1].id)
+      [lista[i], lista[i + 1]] = [lista[i + 1], lista[i]];
+    i = k;
+  }
+  return lista;
+}
+
+const grupoFechado = g => JOGOS.filter(j => j.chave === g).every(jogado);
+const primeiro = g => (grupoFechado(g) ? classificacao(g)[0].id : null);
+function melhorSegundo() {
+  const gs = Object.keys(GRUPOS);
+  if (!gs.every(grupoFechado)) return null;
+  // entre chaves diferentes não há confronto direto
+  return gs.map(g => classificacao(g)[1]).sort((x, y) => base(x, y) || medias(x, y))[0].id;
+}
+function resultado(n, m, v) {
+  const s = MATA[n].sets;
+  if (!s.length || !m || !v) return {};
+  const r = apura(s);
+  return r.a > r.b ? { w: m, l: v } : { w: v, l: m };
+}
+
+/* ---------- renderização ---------- */
+const pad = n => String(n).padStart(2, "0");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const time = id => `<span class="team" tabindex="0" data-id="${id}">${esc(TIMES[id].nome)}</span>`;
+const slot = (id, rotulo) => (id ? time(id) : `<span class="tbd">${rotulo}</span>`);
+const info = j => [j.data, j.hora, j.quadra && "Quadra " + j.quadra].filter(Boolean).join(", ");
+const parciais = sets => sets.map(([x, y]) => `${x}-${y}`).join("   ");
+
+function jogoHTML(j) {
+  const ok = jogado(j), r = apura(j.sets);
+  const extra = [info(j), ok && parciais(j.sets)].filter(Boolean).join("  |  ");
+  return `<li class="jogo">
+    <span class="num">J${pad(j.n)}</span>
+    <span class="lado ${ok && r.a > r.b ? "win" : ""}">${time(j.m)}</span>
+    <span class="placar">${ok ? `${r.a} × ${r.b}` : "×"}</span>
+    <span class="lado dir ${ok && r.b > r.a ? "win" : ""}">${time(j.v)}</span>
+    ${extra ? `<span class="info">${esc(extra)}</span>` : ""}
+  </li>`;
+}
+
+function grupoHTML(g) {
+  const linhas = classificacao(g).map((t, i) => `
+    <tr class="${i === 0 ? "lider" : ""}">
+      <td>${i + 1}</td><td>${time(t.id)}</td>
+      <td>${t.j}</td><td>${t.v}</td><td>${t.d}</td>
+      <td>${t.sp}</td><td>${t.sc}</td><td>${t.sp - t.sc}</td>
+      <td class="pts">${t.pts}</td>
+    </tr>`).join("");
+  const jogos = JOGOS.filter(j => j.chave === g).map(jogoHTML).join("");
+  return `<article class="grupo" style="--cor: var(--g${g})">
+    <h3>Grupo ${g}</h3>
+    <table>
+      <thead><tr><th>#</th><th>Equipe</th><th title="Jogos">J</th><th title="Vitórias">V</th><th title="Derrotas">D</th>
+      <th title="Sets pró">SP</th><th title="Sets contra">SC</th><th title="Saldo de sets">S</th><th title="Pontos">Pts</th></tr></thead>
+      <tbody>${linhas}</tbody>
+    </table>
+    <ul class="jogos">${jogos}</ul>
+  </article>`;
+}
+
+function confronto(n, titulo, m, v, rotM, rotV) {
+  const j = MATA[n], ok = j.sets.length && m && v, r = apura(j.sets), res = resultado(n, m, v);
+  const linha = (id, rot, s) => `
+    <div class="linha ${id && res.w === id ? "win" : ""}">
+      <span>${slot(id, rot)}</span><span class="sets">${ok ? s : "–"}</span>
+    </div>`;
+  const extra = info(j);
+  return `<div class="card">
+    <div class="topo"><span>${titulo}</span><span>${extra ? esc(extra) : "Jogo " + n}</span></div>
+    ${linha(m, rotM, r.a)}${linha(v, rotV, r.b)}
+    ${ok ? `<div class="parciais">${parciais(j.sets)}</div>` : ""}
+  </div>`;
+}
+
+function render() {
+  document.getElementById("grupos").innerHTML = Object.keys(GRUPOS).map(grupoHTML).join("");
+
+  const s19 = { m: primeiro("A"), v: primeiro("B") };
+  const s20 = { m: primeiro("C"), v: melhorSegundo() };
+  const r19 = resultado(19, s19.m, s19.v);
+  const r20 = resultado(20, s20.m, s20.v);
+  const r22 = resultado(22, r19.w, r20.w);
+
+  document.getElementById("chave").innerHTML = `
+    <div class="cel s1">${confronto(19, "Semifinal", s19.m, s19.v, "1º do grupo A", "1º do grupo B")}</div>
+    <div class="cel s2">${confronto(20, "Semifinal", s20.m, s20.v, "1º do grupo C", "Melhor 2º colocado")}</div>
+    <div class="con c1"></div>
+    <div class="con c2"></div>
+    <div class="cel fin">
+      ${confronto(22, "Final", r19.w, r20.w, "Vencedor do jogo 19", "Vencedor do jogo 20")}
+      ${r22.w ? `<div class="campeao">🏆 ${time(r22.w)}</div>` : ""}
+    </div>
+    <div class="cel ter">${confronto(21, "Disputa de 3º lugar", r19.l, r20.l, "Perdedor do jogo 19", "Perdedor do jogo 20")}</div>`;
+}
+
+/* ---------- tooltip ---------- */
+const tip = document.getElementById("tip");
+
+function mostrar(el) {
+  const t = TIMES[el.dataset.id];
+  tip.innerHTML = "";
+  const h = document.createElement("strong");
+  h.textContent = t.nome;
+  tip.append(h);
+  if (t.membros.length) {
+    const ul = document.createElement("ul");
+    t.membros.forEach(nome => {
+      const li = document.createElement("li");
+      li.textContent = nome;
+      ul.append(li);
+    });
+    tip.append(ul);
+  } else {
+    const p = document.createElement("p");
+    p.className = "vazio";
+    p.textContent = "Membros a definir";
+    tip.append(p);
+  }
+  tip.hidden = false;
+  const r = el.getBoundingClientRect();
+  const x = Math.max(8, Math.min(r.left, innerWidth - tip.offsetWidth - 8));
+  const y = r.bottom + 8 + tip.offsetHeight > innerHeight ? r.top - tip.offsetHeight - 8 : r.bottom + 8;
+  tip.style.left = x + "px";
+  tip.style.top = y + "px";
+}
+const esconder = () => (tip.hidden = true);
+
+document.addEventListener("mouseover", e => { const el = e.target.closest(".team"); if (el) mostrar(el); });
+document.addEventListener("mouseout", e => { if (e.target.closest(".team")) esconder(); });
+document.addEventListener("focusin", e => { const el = e.target.closest(".team"); el ? mostrar(el) : esconder(); });
+document.addEventListener("focusout", esconder);
+document.addEventListener("click", e => { const el = e.target.closest(".team"); el ? mostrar(el) : esconder(); }); // toque no celular
+addEventListener("scroll", esconder, { passive: true });
+
+render();
+</script>
+</body>
+</html>
