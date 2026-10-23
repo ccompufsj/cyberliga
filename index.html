@@ -209,6 +209,8 @@
         <ul>
           <li>Na fase de grupos, todas as equipes jogam entre si dentro da chave.</li>
           <li>Classificam-se para a fase final os primeiros colocados de cada chave e o melhor segundo colocado geral.</li>
+          <li>Os três primeiros colocados são ordenados de 1º a 3º pelos critérios de classificação, e o melhor segundo colocado é o 4º.</li>
+          <li>Semifinais: 1º colocado x 4º colocado e 2º colocado x 3º colocado.</li>
         </ul>
       </article>
       <article>
@@ -313,8 +315,8 @@ const JOGOS = [
 ];
 
 const MATA = {
-  19: { sets: [], data: "", hora: "", quadra: "" },  // semifinal: 1º A x 1º B
-  20: { sets: [], data: "", hora: "", quadra: "" },  // semifinal: 1º C x melhor 2º
+  19: { sets: [], data: "", hora: "", quadra: "" },  // semifinal: 1º colocado x 4º (melhor 2º)
+  20: { sets: [], data: "", hora: "", quadra: "" },  // semifinal: 2º colocado x 3º colocado
   21: { sets: [], data: "", hora: "", quadra: "" },  // 3º lugar
   22: { sets: [], data: "", hora: "", quadra: "" },  // final
 };
@@ -435,6 +437,13 @@ function melhorSegundo() {
   // entre chaves diferentes não há confronto direto
   return gs.map(g => classificacao(g)[1]).sort((x, y) => base(x, y) || medias(x, y))[0].id;
 }
+// semifinalistas: 1º a 3º = líderes das chaves ranqueados entre si, 4º = melhor 2º colocado
+function semifinalistas() {
+  const gs = Object.keys(GRUPOS);
+  if (!gs.every(grupoFechado)) return [];
+  const lideres = gs.map(g => classificacao(g)[0]).sort((x, y) => base(x, y) || medias(x, y));
+  return [...lideres.map(t => t.id), melhorSegundo()];
+}
 function resultado(n, m, v) {
   const s = MATA[n].sets;
   if (!s.length || !m || !v) return {};
@@ -499,15 +508,16 @@ function confronto(n, titulo, m, v, rotM, rotV) {
 function render() {
   document.getElementById("grupos").innerHTML = Object.keys(GRUPOS).map(grupoHTML).join("");
 
-  const s19 = { m: primeiro("A"), v: primeiro("B") };
-  const s20 = { m: primeiro("C"), v: melhorSegundo() };
+  const [c1, c2, c3, c4] = semifinalistas();
+  const s19 = { m: c1, v: c4 };
+  const s20 = { m: c2, v: c3 };
   const r19 = resultado(19, s19.m, s19.v);
   const r20 = resultado(20, s20.m, s20.v);
   const r22 = resultado(22, r19.w, r20.w);
 
   document.getElementById("chave").innerHTML = `
-    <div class="cel s1">${confronto(19, "Semifinal", s19.m, s19.v, "1º do grupo A", "1º do grupo B")}</div>
-    <div class="cel s2">${confronto(20, "Semifinal", s20.m, s20.v, "1º do grupo C", "Melhor 2º colocado")}</div>
+    <div class="cel s1">${confronto(19, "Semifinal", s19.m, s19.v, "1º colocado", "4º colocado (melhor 2º)")}</div>
+    <div class="cel s2">${confronto(20, "Semifinal", s20.m, s20.v, "2º colocado", "3º colocado")}</div>
     <div class="con c1"></div>
     <div class="con c2"></div>
     <div class="cel fin">
